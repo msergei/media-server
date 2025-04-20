@@ -15,6 +15,23 @@ services:
     depends_on:
       - base
 
+  ovpn-client:
+    image: dperson/openvpn-client
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    volumes:
+      - ./vpn:/vpn
+    environment:
+      - OPENVPN_CONFIG=your-config.ovpn
+    restart: always
+
+  transmission:
+    network_mode: "service:ovpn-client"
+    depends_on:
+      - ovpn-client
+
   jellyfin:
     network_mode: host # Enable DLNA
     image: jellyfin/jellyfin
