@@ -26,11 +26,14 @@ services:
     environment:
       - OPENVPN_CONFIG=your-config.ovpn
     restart: always
+    ports:
+      - 9091:9091
 
   transmission:
     network_mode: "service:ovpn-client"
     depends_on:
       - ovpn-client
+    ports: !reset []
 
   jellyfin:
     network_mode: host # Enable DLNA
