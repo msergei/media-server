@@ -20,7 +20,7 @@ services:
     cap_add:
       - NET_ADMIN
     devices:
-      - /dev/net/tun
+       - /dev/net/tun:/dev/net/tun
     volumes:
       - ./vpn:/vpn
     environment:
