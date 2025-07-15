@@ -53,5 +53,4 @@ services:
       - GID=200
       - DEFAULT_THEME=dark
       - DOWNLOAD_DIR=/share/youtube
-      - YTDL_OPTIONS='{"writesubtitles": true, "writeautomaticsub": true}'
-
+      - "YTDL_OPTIONS={\"writesubtitles\": true, \"writeautomaticsub\": true}"
