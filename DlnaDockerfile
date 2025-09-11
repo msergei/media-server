@@ -1,11 +1,25 @@
 FROM base_media
 
-RUN useradd -d /share -s /bin/bash minidlna && apt-get install -y minidlna && chown minidlna:minidlna /usr/sbin/minidlnad && apt-get autoremove -y
+RUN useradd -u ${UID:-1000} -g ${GID:-200} -d /share -s /bin/bash minidlna
+
+RUN apt-get install -y minidlna && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /share /var/cache/minidlna /var/log/minidlna /run/minidlna && \
+    chown -R minidlna:${GID:-200} /share /var/cache/minidlna /var/log/minidlna /run/minidlna && \
+    chmod 755 /share /var/cache/minidlna /var/log/minidlna /run/minidlna
 
 COPY minidlna.conf /etc/minidlna.conf
+RUN chown root:root /etc/minidlna.conf && chmod 644 /etc/minidlna.conf
 
-VOLUME ["/share"]
+RUN rm -f /run/minidlna/minidlna.pid
+
+VOLUME ["/share", "/var/cache/minidlna", "/var/log/minidlna"]
+
+EXPOSE 8200/tcp 1900/udp
 
 USER minidlna
 
-CMD ["minidlnad", "-d"]
+CMD ["minidlnad", "-d", "-f", "/etc/minidlna.conf", "-P", "/run/minidlna/minidlna.pid"]
