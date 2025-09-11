@@ -1,6 +1,8 @@
 volumes:
   share: {}
   transmission: {}
+  minidlna_logs: {}
+  minidlna_cache: {}
 
 services:
   base:
@@ -54,3 +56,32 @@ services:
       - DEFAULT_THEME=dark
       - DOWNLOAD_DIR=/share/youtube
       - "YTDL_OPTIONS={\"writesubtitles\": true, \"writeautomaticsub\": true}"
+
+  dlna:
+    build:
+      context: .
+      dockerfile: DlnaDockerfile
+    restart: always
+    network_mode: "host"
+    volumes:
+      - share:/share:ro
+      - minidlna_logs:/var/log/minidlna
+      - minidlna_cache:/var/cache/minidlna
+    depends_on:
+      - base
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 1048576
+    environment:
+      - MINIDLNA_CACHE_DIR=/var/cache/minidlna
+      - MINIDLNA_LOG_DIR=/var/log/minidlna
+    security_opt:
+      - no-new-privileges:true
+    sysctls:
+      - fs.file-max=2097152
+      - net.core.rmem_max=268435456
+      - net.core.wmem_max=268435456
+      - net.ipv4.tcp_rmem=4096 131072 268435456
+      - net.ipv4.tcp_wmem=4096 65536 268435456
+      - net.ipv4.tcp_congestion_control=bbr
