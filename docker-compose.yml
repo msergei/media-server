@@ -3,6 +3,7 @@ volumes:
   transmission: {}
   minidlna_logs: {}
   minidlna_cache: {}
+  metube_downloads: {}
 
 services:
   base:
@@ -48,6 +49,7 @@ services:
       - 8081:8081
     volumes:
       - share:/share
+      - metube_downloads:/downloads
     depends_on:
       - base
     environment:
