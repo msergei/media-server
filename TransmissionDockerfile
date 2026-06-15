@@ -1,9 +1,8 @@
 FROM base_media
 
-RUN apt-get install transmission-daemon wget unzip -y && \
-    mkdir /combustion && cd /combustion && \
-    wget https://github.com/Secretmapper/combustion/archive/release.zip && \
-    unzip release.zip && rm -f release.zip && apt-get remove wget unzip -y && apt-get autoremove -y
+RUN apt-get update && \
+    apt-get install transmission-daemon -y && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY settings.json /etc/transmission-daemon
 
