@@ -38,6 +38,8 @@ services:
       - transmission:/var/lib/transmission-daemon
     depends_on:
       - base
+    environment:
+      - TRANSMISSION_WEB_HOME=/combustion/combustion-release
 
   metube:
     image: ghcr.io/alexta69/metube
