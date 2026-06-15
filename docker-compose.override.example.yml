@@ -1,28 +1,26 @@
+networks:
+  proxy:
+    external: true
+
 volumes:
   share: {}
   config: {}
   cache: {}  
 
 services:
-  ovpn:
-    image: dperson/openvpn-client
-    cap_add:
-      - NET_ADMIN
-    devices:
-       - /dev/net/tun:/dev/net/tun
-    volumes:
-      - ./vpn:/vpn
-    environment:
-      - OPENVPN_CONFIG=your-config.ovpn
-    restart: always
-    ports:
-      - 9091:9091
-
   transmission:
-    network_mode: "service:ovpn"
-    depends_on:
-      - ovpn
-    ports: !reset []
+    networks:
+      - default
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.${TRS_PROJECT_NAME}.rule=Host(`${TRS_DOMAIN}`)
+      - traefik.http.routers.${TRS_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.${TRS_PROJECT_NAME}.tls.certresolver=myresolver
+      - traefik.http.services.${TRS_PROJECT_NAME}.loadbalancer.server.port=9091
+      - traefik.http.middlewares.${TRS_PROJECT_NAME}-auth.basicauth.users=${LOGIN}:${PASS_HASH}
+      - traefik.http.routers.${TRS_PROJECT_NAME}.middlewares=${TRS_PROJECT_NAME}-auth,ratelimit,inflightreq,circuitbreaker,crowdsec-bouncer
 
   jellyfin:
     network_mode: host # Enable DLNA
