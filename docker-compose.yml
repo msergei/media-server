@@ -4,13 +4,9 @@ volumes:
   minidlna_logs: {}
   minidlna_cache: {}
   metube_downloads: {}
+  massistant_data: {}
 
 services:
-  base:
-    build:
-      context: .
-    image: base_media
-
   samba:
     build:
       context: .
@@ -20,8 +16,6 @@ services:
       - 445:445
     volumes:
       - share:/share
-    depends_on:
-      - base
     environment:
       - USER=${USER}
       - PASS=${PASSWORD}
@@ -36,8 +30,6 @@ services:
     volumes:
       - share:/share
       - transmission:/var/lib/transmission-daemon
-    depends_on:
-      - base
     environment:
       - TRANSMISSION_WEB_HOME=/combustion/combustion-release
 
@@ -50,14 +42,17 @@ services:
     volumes:
       - share:/share
       - metube_downloads:/downloads
-    depends_on:
-      - base
     environment:
       - UID=1000
       - GID=200
       - DEFAULT_THEME=dark
       - DOWNLOAD_DIR=/share/youtube
       - "YTDL_OPTIONS={\"writesubtitles\": true, \"writeautomaticsub\": true}"
+      - DOWNLOAD_DIRS_INDEXABLE=true
+      - CUSTOM_DIRS=true
+      - CREATE_CUSTOM_DIRS=true
+      - STATE_DIR=/share/youtube/.metube
+      - TEMP_DIR=/share/youtube/.temp
 
   dlna:
     build:
@@ -69,8 +64,8 @@ services:
       - share:/share:ro
       - minidlna_logs:/var/log/minidlna
       - minidlna_cache:/var/cache/minidlna
-    depends_on:
-      - base
+    tmpfs:
+      - /run/minidlna:mode=1777
     ulimits:
       nofile:
         soft: 65536
@@ -80,10 +75,3 @@ services:
       - MINIDLNA_LOG_DIR=/var/log/minidlna
     security_opt:
       - no-new-privileges:true
-    sysctls:
-      - fs.file-max=2097152
-      - net.core.rmem_max=268435456
-      - net.core.wmem_max=268435456
-      - net.ipv4.tcp_rmem=4096 131072 268435456
-      - net.ipv4.tcp_wmem=4096 65536 268435456
-      - net.ipv4.tcp_congestion_control=bbr

@@ -1,17 +1,19 @@
-FROM base_media
-
+FROM debian:stable-slim
+ENV DEBIAN_FRONTEND=noninteractive
 ENV USER=user
 ENV PASS=pass
 
-ADD smb.sh /run.sh
-ADD smb.conf /etc/samba/smb.conf
+# Samba без recommends + чистка apt (слой до COPY конфигов — правки
+# smb.sh/smb.conf не инвалидируют установку пакетов)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends samba samba-common-bin \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y samba-common-bin samba && \
-    apt-get autoremove -y && \
-    chmod u+x /run.sh
+COPY --chmod=755 smb.sh /run.sh
+COPY smb.conf /etc/samba/smb.conf
 
 EXPOSE 445
-
 VOLUME ["/share"]
 
 CMD ["bash", "/run.sh"]

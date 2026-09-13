@@ -1,25 +1,27 @@
-FROM base_media
+FROM debian:stable-slim
+ARG UID=1000
+ARG GID=200
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN useradd -u ${UID:-1000} -g ${GID:-200} -d /share -s /bin/bash minidlna
+# Пользователь и группа
+RUN groupadd -g $GID minidlna \
+ && useradd -u $UID -g $GID -d /share -s /usr/sbin/nologin minidlna
 
-RUN apt-get install -y minidlna && \
-    apt-get autoremove -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# minidlna без recommends + чистка apt
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends minidlna \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /share /var/cache/minidlna /var/log/minidlna /run/minidlna && \
-    chown -R minidlna:${GID:-200} /share /var/cache/minidlna /var/log/minidlna /run/minidlna && \
-    chmod 755 /share /var/cache/minidlna /var/log/minidlna /run/minidlna
+# Директории (pid-файл живёт в tmpfs, см. docker-compose.yml)
+RUN mkdir -p /share /var/cache/minidlna /var/log/minidlna \
+ && chown minidlna:minidlna /share /var/cache/minidlna /var/log/minidlna
 
 COPY minidlna.conf /etc/minidlna.conf
-RUN chown root:root /etc/minidlna.conf && chmod 644 /etc/minidlna.conf
+COPY --chmod=755 dlna-entrypoint.sh /usr/local/bin/dlna-entrypoint.sh
 
-RUN rm -f /run/minidlna/minidlna.pid
-
-VOLUME ["/share", "/var/cache/minidlna", "/var/log/minidlna"]
-
+VOLUME ["/share","/var/cache/minidlna","/var/log/minidlna"]
 EXPOSE 8200/tcp 1900/udp
 
 USER minidlna
-
-CMD ["minidlnad", "-d", "-f", "/etc/minidlna.conf", "-P", "/run/minidlna/minidlna.pid"]
+CMD ["/usr/local/bin/dlna-entrypoint.sh"]

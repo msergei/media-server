@@ -1,24 +1,33 @@
-FROM base_media
+# Стадия 1: качаем веб-интерфейс Combustion (wget/unzip не попадают в итоговый образ)
+FROM debian:stable-slim AS combustion
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends wget unzip ca-certificates \
+ && wget -q https://github.com/Secretmapper/combustion/archive/release.zip -O /tmp/release.zip \
+ && mkdir /combustion \
+ && unzip -q /tmp/release.zip -d /combustion \
+ && rm /tmp/release.zip
 
-RUN apt-get install transmission-daemon wget unzip -y && \
-    mkdir /combustion && cd /combustion && \
-    wget https://github.com/Secretmapper/combustion/archive/release.zip && \
-    unzip release.zip && rm -f release.zip && apt-get remove wget unzip -y && apt-get autoremove -y
+# Стадия 2: рантайм
+FROM debian:stable-slim
+ARG UID=1000
+ARG GID=200
+ENV DEBIAN_FRONTEND=noninteractive
 
-COPY settings.json /etc/transmission-daemon
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends transmission-daemon transmission-cli \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -g $GID transmissions && \
-    usermod -u $UID debian-transmission && \
-    usermod -aG transmissions debian-transmission && \
-    chown -R debian-transmission:debian-transmission /etc/transmission-daemon && \
-    chown -R debian-transmission:debian-transmission /var/lib/transmission-daemon && \
-    echo "[Service]" >> /etc/systemd/system/multi-user.target.wants/transmission-daemon.service && \
-    echo "User=debian-transmission" >> /etc/systemd/system/multi-user.target.wants/transmission-daemon.service
+COPY --from=combustion /combustion /combustion
+COPY settings.json /etc/transmission-daemon/
+
+RUN groupadd -g $GID transmissions \
+ && usermod -u $UID debian-transmission \
+ && usermod -aG transmissions debian-transmission \
+ && chown -R debian-transmission:debian-transmission /etc/transmission-daemon /var/lib/transmission-daemon
 
 EXPOSE 9091/tcp
-
 VOLUME ["/share", "/var/lib/transmission-daemon"]
 
 USER debian-transmission
-
 CMD ["transmission-daemon", "-f", "-g", "/var/lib/transmission-daemon/.config/transmission-daemon"]
