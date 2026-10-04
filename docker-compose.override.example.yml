@@ -41,6 +41,18 @@ services:
 #      - 8920:8920 #optional
 #      - 7359:7359/udp #optional
 #      - 1900:1900/udp #optional
+#    Behind Traefik (not in host mode): the web client asks for a thumbnail size that
+#    follows the browser window width, and Jellyfin caches every size separately.
+#    These redirects reduce the requests to the two sizes that
+#    scripts/jellyfin-warm-thumbnails.py generates in advance.
+#    labels:
+#      - traefik.http.middlewares.jellyfin-thumbs-s.redirectregex.regex=^https?://[^/]+(/Items/[0-9a-fA-F-]+/Images/Primary)\?fillHeight=\d+&fillWidth=(?:[1-9]\d?|[1-3]\d\d|400)&quality=96&tag=([0-9a-fA-F]+)$$
+#      - traefik.http.middlewares.jellyfin-thumbs-s.redirectregex.replacement=$${1}?fillWidth=400&quality=96&tag=$${2}
+#      - traefik.http.middlewares.jellyfin-thumbs-s.redirectregex.permanent=true
+#      - traefik.http.middlewares.jellyfin-thumbs-l.redirectregex.regex=^https?://[^/]+(/Items/[0-9a-fA-F-]+/Images/Primary)\?fillHeight=\d+&fillWidth=(?:40[1-9]|4[1-9]\d|[5-9]\d\d|1[01]\d\d|1200)&quality=96&tag=([0-9a-fA-F]+)$$
+#      - traefik.http.middlewares.jellyfin-thumbs-l.redirectregex.replacement=$${1}?fillWidth=800&quality=96&tag=$${2}
+#      - traefik.http.middlewares.jellyfin-thumbs-l.redirectregex.permanent=true
+#      - traefik.http.routers.jellyfin.middlewares=jellyfin-thumbs-s,jellyfin-thumbs-l
     restart: always
     devices:
     #  RK3588 (Orange Pi 5 Max config)
