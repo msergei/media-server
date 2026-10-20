@@ -4,7 +4,6 @@ volumes:
   minidlna_logs: {}
   minidlna_cache: {}
   metube_downloads: {}
-  massistant_data: {}
 
 services:
   samba:
@@ -19,6 +18,8 @@ services:
     environment:
       - USER=${USER}
       - PASS=${PASSWORD}
+      - PUID=1000
+      - PGID=200
 
   transmission:
     build:
