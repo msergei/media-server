@@ -25,7 +25,12 @@ services:
   jellyfin:
     network_mode: host # Enable DLNA
     image: jellyfin/jellyfin
-    privileged: true
+    # Without privileged mode Docker masks /sys/firmware and AppArmor denies it, so
+    # Rockchip MPP can't read /proc/device-tree/compatible: the SoC shows up as
+    # "unknown" and hevc_rkmpp fails to init (H.264 still works). Lift only these.
+    security_opt:
+      - systempaths=unconfined
+      - apparmor:unconfined
     environment:
       - PUID=1000
       - PGID=200
@@ -61,13 +66,3 @@ services:
       - /dev/mali0:/dev/mali0
       - /dev/rga:/dev/rga
       - /dev/mpp_service:/dev/mpp_service
-      - /dev/iep:/dev/iep
-      - /dev/mpp-service:/dev/mpp-service
-      - /dev/vpu_service:/dev/vpu_service
-      - /dev/vpu-service:/dev/vpu-service
-      - /dev/hevc_service:/dev/hevc_service
-      - /dev/hevc-service:/dev/hevc-service
-      - /dev/rkvdec:/dev/rkvdec
-      - /dev/rkvenc:/dev/rkvenc
-      - /dev/vepu:/dev/vepu
-      - /dev/h265e:/dev/h265e
